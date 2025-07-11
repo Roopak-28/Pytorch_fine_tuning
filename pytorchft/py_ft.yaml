@@ -1,30 +1,22 @@
-name: Pytorch Yelp Trainer
-description: Train a PyTorch model for Yelp reviews (Elyra compatible, minimal).
+name: PyTorch Yelp Trainer (Elyra)
+description: Train a simple PyTorch model for Yelp review dataset.
 
 inputs:
-  - name: data_path
-    type: String
-    default: "yelp_review_full.csv"
-  - name: epochs
-    type: Integer
-    default: 2
-  - name: batch_size
-    type: Integer
-    default: 64
+  - { name: data_path, type: String, default: "yelp_review_full.csv" }
+  - { name: epochs, type: Integer, default: 2 }
+  - { name: batch_size, type: Integer, default: 64 }
 
 outputs:
-  - name: model_output
-    type: String
-    default: "output/yelp_model.pth"
+  - { name: model_output, type: String, default: "output/yelp_model.pth" }
 
 implementation:
   container:
     image: python:3.10
     command:
-      - sh
-      - -c
-      - |
-        pip install torch pandas torchtext
-        python train.py --data_path {inputs.data_path} --epochs {inputs.epochs} --batch_size {inputs.batch_size} --model_output {outputs.model_output}
+      [
+        "sh",
+        "-c",
+        "pip install torch pandas torchtext && python train.py --data_path {inputs.data_path} --epochs {inputs.epochs} --batch_size {inputs.batch_size} --model_output {outputs.model_output}",
+      ]
     fileOutputs:
       model_output: output/yelp_model.pth

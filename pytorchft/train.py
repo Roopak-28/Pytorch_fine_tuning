@@ -57,7 +57,6 @@ def main():
     val_size = len(dataset) - train_size
     train_ds, val_ds = random_split(dataset, [train_size, val_size])
     train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
-    val_loader = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn)
 
     model = SimpleClassifier(len(dataset.vocab), 100, 5)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -77,6 +76,7 @@ def main():
             optimizer.step()
             total_loss += loss.item()
         print(f"Epoch {epoch+1}, Train Loss: {total_loss / len(train_loader):.4f}")
+
     os.makedirs(os.path.dirname(args.model_output), exist_ok=True)
     torch.save(model.state_dict(), args.model_output)
     print(f"Model saved to {args.model_output}")
