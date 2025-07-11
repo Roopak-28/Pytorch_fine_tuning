@@ -1,22 +1,40 @@
-name: PyTorch Yelp Trainer (Elyra)
-description: Train a simple PyTorch model for Yelp review dataset.
+name: Fine-tune BERT with LoRA on Yelp Reviews
+description: Fine-tunes a BERT model using Hugging Face Transformers and PEFT LoRA on Yelp Review Full dataset.
 
 inputs:
-  - { name: data_path, type: String, default: "yelp_review_full.csv" }
-  - { name: epochs, type: Integer, default: 2 }
-  - { name: batch_size, type: Integer, default: 64 }
+  - name: dataset_name
+    type: String
+    description: Hugging Face dataset name (e.g. yelp_review_full)
+  - name: model_uri
+    type: String
+    description: Model ID from Hugging Face hub (e.g. bert-base-cased)
+  - name: output_dir
+    type: String
+    description: Directory to save intermediate trainer output
 
 outputs:
-  - { name: model_output, type: String, default: "output/yelp_model.pth" }
+  - name: trained_model
+    type: Directory
+    description: Fine-tuned model files
+  - name: training_logs
+    type: Directory
+    description: Training logs and status
 
 implementation:
   container:
-    image: python:3.10
+    image: python:3.9
     command:
-      [
-        "sh",
-        "-c",
-        "pip install torch pandas torchtext && python train.py --data_path {inputs.data_path} --epochs {inputs.epochs} --batch_size {inputs.batch_size} --model_output {outputs.model_output}",
-      ]
+      - sh
+      - -c
+      - |
+        set -e
+        pip install --quiet --no-cache-dir transformers datasets peft accelerate
+        python3 train.py \
+          --dataset_name {inputValue: dataset_name} \
+          --model_uri {inputValue: model_uri} \
+          --output_dir {inputValue: output_dir} \
+          --trained_model {outputPath: trained_model} \
+          --training_logs {outputPath: training_logs}
     fileOutputs:
-      model_output: output/yelp_model.pth
+      trained_model: trained_model
+      training_logs: training_logs
