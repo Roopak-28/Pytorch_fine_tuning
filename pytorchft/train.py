@@ -49,28 +49,22 @@ def main():
     parser.add_argument('--data_path', type=str, required=True)
     parser.add_argument('--epochs', type=int, default=2)
     parser.add_argument('--batch_size', type=int, default=64)
-    parser.add_argument('--emb_dim', type=int, default=100)
-    parser.add_argument('--max_len', type=int, default=128)
-    parser.add_argument('--lr', type=float, default=0.001)
-    parser.add_argument('--model_path', type=str, default="output/yelp_model.pth")
+    parser.add_argument('--model_output', type=str, default="output/yelp_model.pth")
     args = parser.parse_args()
 
-    # Prepare Dataset
-    dataset = YelpDataset(args.data_path, max_len=args.max_len)
+    dataset = YelpDataset(args.data_path)
     train_size = int(0.9 * len(dataset))
     val_size = len(dataset) - train_size
     train_ds, val_ds = random_split(dataset, [train_size, val_size])
     train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
     val_loader = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn)
 
-    # Model
-    model = SimpleClassifier(len(dataset.vocab), args.emb_dim, 5)
+    model = SimpleClassifier(len(dataset.vocab), 100, 5)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
     loss_fn = nn.CrossEntropyLoss()
 
-    # Training Loop
     for epoch in range(args.epochs):
         model.train()
         total_loss = 0
@@ -83,23 +77,9 @@ def main():
             optimizer.step()
             total_loss += loss.item()
         print(f"Epoch {epoch+1}, Train Loss: {total_loss / len(train_loader):.4f}")
-
-        # Validation
-        model.eval()
-        correct = 0
-        with torch.no_grad():
-            for x, y in val_loader:
-                x, y = x.to(device), y.to(device)
-                out = model(x)
-                pred = out.argmax(dim=1)
-                correct += (pred == y).sum().item()
-        acc = correct / len(val_ds)
-        print(f"Val Accuracy: {acc:.4f}")
-
-    # Save Model
-    os.makedirs(os.path.dirname(args.model_path), exist_ok=True)
-    torch.save(model.state_dict(), args.model_path)
-    print(f"Model saved to {args.model_path}")
+    os.makedirs(os.path.dirname(args.model_output), exist_ok=True)
+    torch.save(model.state_dict(), args.model_output)
+    print(f"Model saved to {args.model_output}")
 
 if __name__ == "__main__":
     main()
